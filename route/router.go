@@ -3,6 +3,12 @@ package route
 import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+
+	"repos.tdctechsupport.com/t2015014/user_management_server/api"
+	"repos.tdctechsupport.com/t2015014/user_management_server/conf"
+	"repos.tdctechsupport.com/t2015014/user_management_server/db"
+	"repos.tdctechsupport.com/t2015014/user_management_server/handler"
+	mw "repos.tdctechsupport.com/t2015014/user_management_server/middleware"
 )
 
 func Init() *echo.Echo {
@@ -15,9 +21,12 @@ func Init() *echo.Echo {
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAcceptEncoding},
 	}))
 
-	// TODO: DB Connection Init
+	config := new(conf.AppConfig)
 
-	// TODO: Error Handler Setting
+	e.HTTPErrorHandler = handler.JSONHTTPErrorHandler
+	e.Use(mw.MongoClientHandler(db.ConnectDB(config.MongoURL)))
+
+	e.GET("/users/:email", api.GetUser())
 
 	return e
 }

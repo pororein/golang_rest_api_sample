@@ -13,7 +13,7 @@ const (
 	ClientContextKey = "MongoContex"
 )
 
-func MongoClientHandler(client *mongo.Client, ctx context.Context) echo.MiddlewareFunc {
+func MongoClientHandler(client *mongo.Client, ctx *context.Context) echo.MiddlewareFunc {
 
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return echo.HandlerFunc(func(c echo.Context) error {
@@ -21,7 +21,7 @@ func MongoClientHandler(client *mongo.Client, ctx context.Context) echo.Middlewa
 			c.Set(ClientKey, client)
 			c.Set(ClientContextKey, ctx)
 
-			err := client.Ping(ctx, readpref.Primary())
+			err := client.Ping(*ctx, readpref.Primary())
 			if err != nil {
 				return err
 			}
