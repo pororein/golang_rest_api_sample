@@ -3,14 +3,14 @@ package middleware
 import (
 	"context"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 const (
 	ClientKey        = "MongoClient"
-	ClientContextKey = "MongoContex"
+	ClientContextKey = "MongoContext"
 )
 
 func MongoClientHandler(client *mongo.Client, ctx *context.Context) echo.MiddlewareFunc {
@@ -23,6 +23,11 @@ func MongoClientHandler(client *mongo.Client, ctx *context.Context) echo.Middlew
 
 			err := client.Ping(*ctx, readpref.Primary())
 			if err != nil {
+				c.Logger().Error("connection error:", err)
+				return err
+			}
+
+			if err = next(c); err != nil {
 				return err
 			}
 

@@ -8,10 +8,10 @@ import (
 )
 
 type User struct {
-	ID        primitive.ObjectID `bson:_id`
-	EMail     string             `bson:e_mail`
-	FirstName string             `bson:first_name`
-	LastName  string             `bson:last_name`
+	ID        primitive.ObjectID `json:"id" bson:"_id"`
+	EMail     string             `json:"e_mail" bson:"e_mail"`
+	FirstName string             `json:"first_name" bson:"first_name"`
+	LastName  string             `json:"last_name" bson:"last_name"`
 }
 
 func NewUser(email string, firstName string, lastName string) *User {
@@ -22,19 +22,27 @@ func NewUser(email string, firstName string, lastName string) *User {
 	}
 }
 
-func (u *User) Save(client *mongo.Client) {
+func (u *User) Save(client *mongo.Client) (result *mongo.InsertOneResult, err error) {
 	collection := client.Database("user_management").Collection("user")
-	collection.InsertOne(context.Background(), *u)
+	return collection.InsertOne(context.Background(), *u)
+}
+
+func (u *User) Update(client *mongo.Client, email string) (result *mongo.UpdateResult, err error) {
+	collection := client.Database("user_management").Collection("user")
+	return collection.UpdateOne(
+		context.Background(),
+		bson.D{primitive.E{Key: "e_mail", Value: email}},
+		bson.D{primitive.E{Key: "$set", Value: bson.D{primitive.E{Key: "e_mail", Value: u.EMail},
+			primitive.E{Key: "first_name", Value: u.FirstName},
+			primitive.E{Key: "last_name", Value: u.LastName}}}})
 }
 
 func (u *User) Load(client *mongo.Client, email string) error {
 	collection := client.Database("user_management").Collection("user")
-	return collection.FindOne(context.Background(), bson.M{"e_mail": email}).Decode(&u)
+	return collection.FindOne(context.Background(), bson.D{{"e_mail", email}}).Decode(u)
 }
 
-func (u *User) Delete(client *mongo.Client, objectIDHex string) error {
+func (u *User) Delete(client *mongo.Client, email string) (result *mongo.DeleteResult, err error) {
 	collection := client.Database("user_management").Collection("user")
-	objectID, _ := primitive.ObjectIDFromHex(objectIDHex)
-	_, err := collection.DeleteOne(context.Background(), bson.M{"_id": objectID})
-	return err
+	return collection.DeleteOne(context.Background(), bson.D{{"e_mail", email}})
 }
